@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroMind — Your AI Space Explorer</title>
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- App Stylesheets -->
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/hud.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%22><text y=%2226%22 font-size=%2226%22>🚀</text></svg>">
+</head>
+<body>
+
+  <!-- Three.js 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- UI Overlay Layer -->
+  <div class="ui-layer">
+    
+    <!-- 1. TOP NAVIGATION & SIMULATION BAR -->
+    <header class="top-navbar interactive-panel">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <i class="fa-solid fa-atom"></i>
+        </div>
+        <div class="brand-text">
+          <h1>ASTROMIND</h1>
+          <div class="brand-tagline">YOUR AI SPACE EXPLORER • 3D SOLAR SYSTEM</div>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <!-- Play / Pause Time -->
+        <button id="btn-play-pause" class="ctrl-btn" title="Pause / Play Time Orbit Simulation">
+          <i class="fa-solid fa-pause"></i>
+        </button>
+
+        <!-- Time Speed Multiplier Slider -->
+        <div class="speed-control-group" title="Orbital Velocity Multiplier">
+          <i class="fa-solid fa-forward-step text-xs text-gray-400"></i>
+          <input type="range" id="speed-slider" class="speed-slider" min="0.1" max="10.0" step="0.1" value="1.0">
+          <span id="speed-label" class="font-mono text-xs text-cyan-400 font-bold">1.0x</span>
+        </div>
+
+        <!-- Visual vs True Scale Toggle -->
+        <button id="btn-toggle-scale" class="ctrl-btn" title="Toggle Educational Visual Scale vs True Scale">
+          Scale: Visual
+        </button>
+
+        <!-- Orbits Visibility Toggle -->
+        <button id="btn-toggle-orbits" class="ctrl-btn active" title="Toggle Orbit Path Lines">
+          <i class="fa-solid fa-circle-notch"></i> Orbits
+        </button>
+
+        <!-- Sound FX / Ambient Audio Toggle -->
+        <button id="btn-toggle-audio" class="ctrl-btn" title="Toggle Procedural Synthesizer Sound Effects">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+
+        <!-- Camera Tracking Follow Indicator -->
+        <button id="btn-camera-target" class="ctrl-btn active" title="Currently following target in orbit (Click to re-center)">
+          <i class="fa-solid fa-crosshairs text-cyan-400"></i> <span id="camera-target-label">Follow: Earth</span>
+        </button>
+
+        <!-- Toggle Command Center Window (AI, Quiz, Tours, Compare) -->
+        <button id="btn-toggle-command-nav" class="ctrl-btn active" title="Toggle AI Command Center Window">
+          <i class="fa-solid fa-headset text-cyan-400"></i> AI Command
+        </button>
+
+        <!-- Reset Camera Overview -->
+        <button id="btn-reset-overview" class="ctrl-btn" title="Unlock Camera & Fly to Solar System Overview">
+          <i class="fa-solid fa-compress"></i> Overview
+        </button>
+
+        <!-- AI Settings Modal -->
+        <button id="btn-open-settings" class="ctrl-btn" title="Configure Gemini API or AI Mode">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. MAIN WORKSPACE PANELS -->
+    <main class="workspace-container">
+      
+      <!-- LEFT PANEL: CELESTIAL DOSSIER -->
+      <section id="dossier-panel" class="dossier-panel interactive-panel">
+        <div class="panel-header">
+          <div class="dossier-title-area">
+            <h2><span id="dossier-name">Earth</span> <span id="dossier-latin" class="text-xs text-gray-400 font-normal"></span></h2>
+            <div id="dossier-category" class="dossier-category-badge">Terrestrial Planet</div>
+          </div>
+          <button id="btn-collapse-dossier" class="btn-icon" title="Minimize Dossier">
+            <i class="fa-solid fa-angles-left"></i>
+          </button>
+        </div>
+
+        <!-- Dossier Sub-Tabs -->
+        <nav class="dossier-tabs-nav">
+          <button class="dossier-tab-btn active" data-tab="specs">
+            <i class="fa-solid fa-circle-info"></i> Specs
+          </button>
+          <button class="dossier-tab-btn" data-tab="atmosphere">
+            <i class="fa-solid fa-wind"></i> Atmosphere
+          </button>
+          <button class="dossier-tab-btn" data-tab="structure">
+            <i class="fa-solid fa-layer-group"></i> Anatomy
+          </button>
+          <button class="dossier-tab-btn" data-tab="missions">
+            <i class="fa-solid fa-rocket"></i> Missions
+          </button>
+          <button class="dossier-tab-btn" data-tab="tools">
+            <i class="fa-solid fa-calculator"></i> Tools
+          </button>
+        </nav>
+
+        <!-- Dossier Body Content -->
+        <div class="dossier-body">
+          
+          <!-- TAB 1: SPECS & OVERVIEW -->
+          <div id="tab-specs" class="dossier-tab-content active">
+            <p id="dossier-tagline" class="text-xs text-cyan-400 font-semibold mb-2"></p>
+            <p id="dossier-overview" class="text-xs text-gray-300 leading-relaxed"></p>
+
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-label">Radius</div>
+                <div id="metric-radius" class="metric-value">6,371 km</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Gravity</div>
+                <div id="metric-gravity" class="metric-value">9.81 m/s²</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Avg Temp</div>
+                <div id="metric-temp" class="metric-value">15°C</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Moons</div>
+                <div id="metric-moons" class="metric-value">1</div>
+              </div>
+              <div class="metric-card" style="grid-column: span 2;">
+                <div class="metric-label">Orbital Period (Year)</div>
+                <div id="metric-orbit" class="metric-value">365.25 days</div>
+              </div>
+              <div class="metric-card" style="grid-column: span 2;">
+                <div class="metric-label">Rotation Period (Day)</div>
+                <div id="metric-rotation" class="metric-value">23h 56m</div>
+              </div>
+            </div>
+
+            <!-- Fun Facts Snippets -->
+            <div class="mt-4 pt-3 border-t border-gray-800">
+              <div class="text-xs font-mono font-bold text-gray-400 uppercase mb-2">Astronomical Highlights</div>
+              <ul id="fun-facts-list" class="text-xs text-gray-300 space-y-2"></ul>
+            </div>
+          </div>
+
+          <!-- TAB 2: ATMOSPHERE & SURVIVAL -->
+          <div id="tab-atmosphere" class="dossier-tab-content">
+            <div class="text-xs font-mono font-bold text-gray-400 uppercase mb-3">Atmospheric Composition</div>
+            <div id="atmo-bars"></div>
+
+            <div class="text-xs font-mono font-bold text-gray-400 uppercase mt-4 mb-2">Human Survival Simulation</div>
+            <div id="survival-box" class="survival-box"></div>
+          </div>
+
+          <!-- TAB 3: INTERNAL ANATOMY CROSS-SECTION -->
+          <div id="tab-structure" class="dossier-tab-content">
+            <div class="text-xs font-mono font-bold text-gray-400 uppercase mb-3">Internal Cross-Section Layers</div>
+            <div id="structure-layers"></div>
+          </div>
+
+          <!-- TAB 4: HISTORICAL MISSIONS TIMELINE -->
+          <div id="tab-missions" class="dossier-tab-content">
+            <div class="text-xs font-mono font-bold text-gray-400 uppercase mb-3">Spacecraft Exploration Milestones</div>
+            <div id="missions-timeline"></div>
+          </div>
+
+          <!-- TAB 5: WEIGHT & AGE CALCULATORS -->
+          <div id="tab-tools" class="dossier-tab-content">
+            <div class="calc-card">
+              <label class="font-mono text-xs text-cyan-400 font-bold uppercase">Your Weight on This Planet</label>
+              <input type="number" id="input-earth-weight" class="calc-input" value="70" min="1" max="500">
+              <div class="text-xs text-gray-400 mt-1">Enter your Earth weight (kg)</div>
+              <div id="output-calc-weight" class="calc-result-box">70.0 kg (1.0x Earth)</div>
+            </div>
+
+            <div class="calc-card">
+              <label class="font-mono text-xs text-amber-400 font-bold uppercase">Your Age on This Planet</label>
+              <input type="number" id="input-earth-age" class="calc-input" value="25" min="1" max="120">
+              <div class="text-xs text-gray-400 mt-1">Enter your Earth age (years)</div>
+              <div id="output-calc-age" class="calc-result-box">25.0 Earth years old</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Floating Edge Toggle for Left Dossier -->
+      <button id="btn-open-dossier-floating" class="floating-toggle-btn floating-left interactive-panel" title="Show Planetary Dossier">
+        <i class="fa-solid fa-chevron-right"></i> <i class="fa-solid fa-globe text-cyan-400"></i> <span>DOSSIER</span>
+      </button>
+
+      <!-- Floating Edge Toggle for Right Command Center (AI, Quiz, Tours, Compare) -->
+      <button id="btn-open-command-floating" class="floating-toggle-btn floating-right interactive-panel" title="Show Command Center (AI Explorer, Quiz, Tours, Compare)">
+        <i class="fa-solid fa-robot text-cyan-400"></i> <span>AI & COMMAND</span> <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <!-- RIGHT PANEL: ASTROMIND COMMAND CENTER (AI, QUIZ, TOURS, COMPARE) -->
+      <section id="command-panel" class="command-center-panel interactive-panel">
+        <nav class="right-nav-tabs">
+          <button class="right-nav-tab active" data-target="tab-ai-chat">
+            <i class="fa-solid fa-headset text-sm"></i> AI Explorer
+          </button>
+          <button class="right-nav-tab" data-target="tab-quiz">
+            <i class="fa-solid fa-brain text-sm"></i> Quiz Lab
+          </button>
+          <button class="right-nav-tab" data-target="tab-tours">
+            <i class="fa-solid fa-compass text-sm"></i> Guided Tours
+          </button>
+          <button class="right-nav-tab" data-target="tab-compare">
+            <i class="fa-solid fa-scale-balanced text-sm"></i> Compare
+          </button>
+          <button id="btn-collapse-command" class="btn-collapse-command" title="Hide Command Center (AI, Quiz, Tours, Compare)">
+            <i class="fa-solid fa-angles-right"></i>
+          </button>
+        </nav>
+
+        <!-- PANEL 1: AI EXPLORER & QUESTION ASSISTANT -->
+        <div id="tab-ai-chat" class="right-tab-panel active">
+          <div class="chat-container">
+            <div class="chat-context-bar">
+              <div id="ai-current-context" class="ai-context-pill">
+                <i class="fa-solid fa-location-crosshairs text-cyan-400 mr-1.5"></i> Orbiting Earth
+              </div>
+              <button id="btn-tts-toggle" class="btn-tts active" title="Voice Synthesis Audio Toggle">
+                <i class="fa-solid fa-volume-high mr-1"></i> Voice AI
+              </button>
+            </div>
+
+            <div id="chat-messages" class="chat-messages"></div>
+
+            <div class="prompt-chips-tray" id="ai-prompt-chips"></div>
+
+            <div class="chat-input-bar">
+              <input type="text" id="chat-input" class="chat-input" placeholder="Ask NOVA about gravity, atmosphere, missions...">
+              <button id="btn-chat-send" class="btn-send" title="Send Question">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: DYNAMIC AI QUIZ LAB -->
+        <div id="tab-quiz" class="right-tab-panel">
+          <div class="quiz-header-bar">
+            <div class="quiz-stats-row">
+              <div id="quiz-rank-name" class="quiz-stat-pill">Orbital Cadet</div>
+              <div id="quiz-xp-val" class="quiz-stat-pill text-amber-400">0 XP</div>
+              <div id="quiz-streak-val" class="quiz-stat-pill text-rose-400">0 🔥</div>
+            </div>
+            <select id="quiz-difficulty-select" class="quiz-select">
+              <option value="all">All Difficulties</option>
+              <option value="novice">Stargazer (Novice)</option>
+              <option value="intermediate">Cosmonaut (Medium)</option>
+              <option value="expert">Astrophysicist (Hard)</option>
+            </select>
+          </div>
+
+          <div class="quiz-card">
+            <div class="quiz-meta">
+              <span id="quiz-category-tag" class="text-xs font-mono text-cyan-400 font-bold">SOLAR SYSTEM</span>
+              <span id="quiz-difficulty-tag" class="badge-diff badge-novice">STARGAZER</span>
+            </div>
+            <div id="quiz-question-text" class="quiz-question-title">Loading question...</div>
+            <div id="quiz-options" class="quiz-options"></div>
+            <div id="quiz-explanation" class="quiz-explanation"></div>
+          </div>
+
+          <button id="btn-quiz-next" class="btn-quiz-next" style="display: none;">
+            Next Challenge <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- PANEL 3: GUIDED INTERPLANETARY TOURS -->
+        <div id="tab-tours" class="right-tab-panel">
+          <div class="text-xs font-mono font-bold text-gray-400 uppercase mb-3">Curated Cinematic Expeditions</div>
+          <div id="tours-list"></div>
+        </div>
+
+        <!-- PANEL 4: PLANET COMPARISON MATRIX -->
+        <div id="tab-compare" class="right-tab-panel">
+          <div class="compare-selectors-grid">
+            <div>
+              <label class="text-xs font-mono text-cyan-400 font-bold block mb-1">Celestial Body A</label>
+              <select id="select-compare-1" class="comp-select"></select>
+            </div>
+            <div>
+              <label class="text-xs font-mono text-amber-400 font-bold block mb-1">Celestial Body B</label>
+              <select id="select-compare-2" class="comp-select"></select>
+            </div>
+          </div>
+          <div id="compare-matrix-output"></div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- 3. BOTTOM CAROUSEL DOCK -->
+    <footer class="bottom-dock-container interactive-panel">
+      <div id="dock-cards" class="dock-cards"></div>
+    </footer>
+
+  </div>
+
+  <!-- OVERLAY 1: INTERPLANETARY TRANSIT FLIGHT HUD -->
+  <div id="flight-hud" class="flight-hud">
+    <div class="hud-title-bar">
+      <div class="hud-title">
+        <i class="fa-solid fa-shuttle-space"></i> INTERPLANETARY TRANSIT IN PROGRESS
+      </div>
+      <div id="hud-warp-factor" class="hud-warp-badge">WARP 4.2</div>
+    </div>
+    <div class="hud-vector-grid">
+      <div id="hud-origin" class="hud-body-tag">EARTH</div>
+      <div class="hud-vector-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+      <div id="hud-target" class="hud-body-tag text-cyan-400">MARS</div>
+    </div>
+    <div class="hud-telemetry-row">
+      <div class="hud-data-point">
+        <span class="hud-data-label">TRANSIT DISTANCE</span>
+        <span id="hud-distance" class="hud-data-val">78.3 M km (~0.52 AU)</span>
+      </div>
+      <div class="hud-data-point">
+        <span class="hud-data-label">LIGHT PROPAGATION TIME</span>
+        <span id="hud-light-time" class="hud-data-val">4.3 minutes</span>
+      </div>
+    </div>
+    <div class="hud-progress-track">
+      <div id="hud-progress-fill" class="hud-progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- OVERLAY 2: GUIDED TOUR NARRATIVE BANNER -->
+  <div id="tour-banner" class="tour-banner">
+    <div class="tour-banner-header">
+      <div id="tour-title" class="font-bold text-cyan-400 text-sm">Grand Planetary Odyssey</div>
+      <div id="tour-step-info" class="tour-step-badge">Stop 1 of 6</div>
+    </div>
+    <p id="tour-narrative" class="tour-banner-narrative"></p>
+    <div class="tour-banner-controls">
+      <button id="btn-tour-prev" class="tour-nav-btn"><i class="fa-solid fa-backward"></i> Previous</button>
+      <button id="btn-tour-next" class="tour-nav-btn">Next Stop <i class="fa-solid fa-forward"></i></button>
+      <button id="btn-tour-exit" class="tour-exit-btn"><i class="fa-solid fa-xmark"></i> Abort Tour</button>
+    </div>
+  </div>
+
+  <!-- OVERLAY 3: SETTINGS MODAL (GEMINI API KEY & CONFIG) -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-sliders mr-2"></i> AstroMind Engine Settings</h3>
+        <button id="btn-close-settings" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Google Gemini API Key (Optional)</label>
+          <input type="password" id="input-gemini-key" class="form-input" placeholder="Enter AI Studio API Key...">
+          <div class="form-helper">
+            AstroMind comes built-in with an offline neural astrophysics knowledge engine. 
+            Add your Gemini API key if you want open-ended live Gemini LLM responses!
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gemini Model</label>
+          <select id="select-gemini-model" class="form-select">
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra-fast)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Reasoning)</option>
+            <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-save-settings" class="btn-primary">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts: 3D Libraries (Local offline first with CDN fallback) -->
+  <script src="/js/libs/three.min.js"></script>
+  <script src="/js/libs/OrbitControls.js"></script>
+  <script src="/js/libs/tween.umd.js"></script>
+
+  <!-- AstroMind Core Engines -->
+  <script src="/js/data.js"></script>
+  <script src="/js/audio.js"></script>
+  <script src="/js/solarSystem.js"></script>
+  <script src="/js/cameraFlight.js"></script>
+  <script src="/js/aiEngine.js"></script>
+  <script src="/js/quizEngine.js"></script>
+  <script src="/js/tours.js"></script>
+  <script src="/js/app.js"></script>
+
+</body>
+</html>
